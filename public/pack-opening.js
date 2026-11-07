@@ -3,7 +3,7 @@ export function presentPack({modal, set, pulled, pack, card, tone, foilSound, on
   const controller = new AbortController();
   const {signal} = controller;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let phase = 'sealed', index = 0, locked = false, startX;
+  let phase = 'sealed', index = 0, locked = false, startX, suppressClickUntil = 0;
   const back = () => '<span class="back-mark">▱</span><strong>SUNDAY<br>CARDS</strong><small>THE FIRST EDITION</small>';
   modal.className = 'pack-opening-modal';
   modal.setAttribute('aria-labelledby', 'opening-title');
@@ -103,10 +103,10 @@ export function presentPack({modal, set, pulled, pack, card, tone, foilSound, on
     finally{locked=false;if(!signal.aborted){next.disabled=false;next.focus({preventScroll:true});}}
   }
   listen(next,'click',advance);
-  listen(stage,'click',e=>{if(e.target.closest('.foil-wrapper,.physical-stack')&&['sealed','stack','face'].includes(phase))advance();});
+  listen(stage,'click',e=>{if(performance.now()<suppressClickUntil){suppressClickUntil=0;return;}if(e.target.closest('.foil-wrapper,.physical-stack')&&['sealed','stack','face'].includes(phase))advance();});
   // A swipe tears the seam; tapping or the focused button works equally well.
   listen(stage,'pointerdown',e=>{startX=e.target.closest('.foil-wrapper')?e.clientX:undefined;});
-  listen(stage,'pointerup',e=>{if(phase==='sealed'&&startX!==undefined&&Math.abs(e.clientX-startX)>45)advance();startX=undefined;});
+  listen(stage,'pointerup',e=>{if(phase==='sealed'&&startX!==undefined&&Math.abs(e.clientX-startX)>45){suppressClickUntil=performance.now()+500;advance();}startX=undefined;});
   listen(stage,'pointercancel',()=>{startX=undefined;});
   modal.showModal();next.focus();
 }
