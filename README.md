@@ -41,3 +41,7 @@ The browser flow has also been exercised in system Chromium at desktop and mobil
 Push to `main`, then in GitHub repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions**. The included Pages workflow tests, builds, and deploys the preview. If the workflow failed before Pages was enabled, rerun it in the Actions tab. GitHub reports the final published URL in the deployment; the expected project path is `https://taylonc.github.io/codex/`.
 
 For a local static test, serve `dist/` with any static HTTP server. All paths are relative, including artwork, so the preview works at a GitHub Pages project subpath. The standard `npm start` app continues to use server-backed accounts and SQLite.
+
+## Physical pack opening
+
+The opening presents a foil seam that can be swiped or opened with a button, a torn wrapper, an extracted face-down stack, and one card turned over at a time. Use the main button or tap the stack/current card to continue. The five-card summary appears only after the last reveal. Sound follows the desk's sound toggle; reduced-motion preferences skip the movements. Closing or pressing Escape cancels presentation animations; cards are awarded once when opening starts and remain saved even if the presentation is dismissed.
