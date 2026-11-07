@@ -1,11 +1,11 @@
 // A pack is awarded once by the caller. This module only presents those cards.
-export function presentPack({modal, set, pulled, pack, card, tone, foilSound, onClose}) {
+export function presentPack({modal, set, pulled, pack, card, tone, foilSound, onClose, inline=false, autoStart=false}) {
   const controller = new AbortController();
   const {signal} = controller;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let phase = 'sealed', index = 0, locked = false, startX, suppressClickUntil = 0;
   const back = () => '<span class="back-mark">▱</span><strong>SUNDAY<br>CARDS</strong><small>THE FIRST EDITION</small>';
-  modal.className = 'pack-opening-modal';
+  modal.className = inline ? 'desk-opening' : 'pack-opening-modal';
   modal.setAttribute('aria-labelledby', 'opening-title');
   modal.innerHTML = `
     <button class="close opening-close" aria-label="Close opening">×</button>
@@ -34,7 +34,8 @@ export function presentPack({modal, set, pulled, pack, card, tone, foilSound, on
   const instruction=modal.querySelector('#opening-instruction');
   const progress=modal.querySelector('.opening-progress');
   const listen=(el,event,fn)=>el.addEventListener(event,fn,{signal});
-  const close=()=>modal.close();
+  const close=()=>{if(inline){controller.abort();onClose();}else modal.close();};
+  if(inline)listen(document,'keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))close();});
   listen(modal.querySelector('.opening-close'),'click',close);
   modal.addEventListener('close',()=>{controller.abort();modal.removeAttribute('aria-labelledby');onClose();},{once:true});
   function backs(){stack.innerHTML=Array.from({length:pulled.length-index},(_,i)=>`<div class="physical-card stack-back" style="--depth:${i};z-index:${10-i}">${back()}</div>`).reverse().join('');}
@@ -100,7 +101,7 @@ export function presentPack({modal, set, pulled, pack, card, tone, foilSound, on
       else if(phase==='stack')await reveal();
       else if(phase==='face'){await setAside();if(index===5)summary();else await reveal();}
     }catch(e){if(e.name!=='AbortError')console.error(e);}
-    finally{locked=false;if(!signal.aborted){next.disabled=false;next.focus({preventScroll:true});}}
+    finally{locked=false;if(!signal.aborted){next.disabled=false;if(!inline||!document.querySelector('dialog[open]'))next.focus({preventScroll:true});}}
   }
   listen(next,'click',advance);
   listen(stage,'click',e=>{if(performance.now()<suppressClickUntil){suppressClickUntil=0;return;}if(e.target.closest('.foil-wrapper,.physical-stack')&&['sealed','stack','face'].includes(phase))advance();});
@@ -108,5 +109,7 @@ export function presentPack({modal, set, pulled, pack, card, tone, foilSound, on
   listen(stage,'pointerdown',e=>{startX=e.target.closest('.foil-wrapper')?e.clientX:undefined;});
   listen(stage,'pointerup',e=>{if(phase==='sealed'&&startX!==undefined&&Math.abs(e.clientX-startX)>45){suppressClickUntil=performance.now()+500;advance();}startX=undefined;});
   listen(stage,'pointercancel',()=>{startX=undefined;});
-  modal.showModal();next.focus();
+  if(!inline)modal.showModal();
+  if(autoStart)advance();else next.focus({preventScroll:true});
+  return ()=>controller.abort();
 }
